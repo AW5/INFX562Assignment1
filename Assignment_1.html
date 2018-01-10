@@ -39,11 +39,11 @@
        subheader.text("By Anthony Wang").attr("class","mono")
 
       var margin = { top: 50, right: 0, bottom: 100, left: 230 },
-          width = 740 - margin.left - margin.right,
+          width = 840 - margin.left - margin.right,
           height = 1000 - margin.top - margin.bottom,
-          gridSize = Math.floor((width-100) / 8),
-          gridSizeWidth = Math.floor((width-100) / 8)*3,
-          legendElementWidth = gridSize,
+          gridSize = Math.floor((width-100) / 10),
+          gridSizeWidth = Math.floor((width-100) / 10)*3,
+          legendElementWidth = gridSize*1.2,
           buckets = 9,
           colors = ["#081d58",	"#253494",	"#225ea8",	"#1d91c0",	"#41b6c4",	"#7fcdbb",	"#c7e9b4",	"#edf8b1",	"#ffffd9"], // alternatively colorbrewer.YlGnBu[9]
           days = ["Aerobacter aerogenes",
@@ -169,7 +169,7 @@
         legend.append("text")
             .attr("class", "mono")
             .text("Least Effective")
-            .attr("x", 360)
+            .attr("x", 460)
             .attr("y", height-10);
         
         legend.append("text")
