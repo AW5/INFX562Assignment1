@@ -1,30 +1,211 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>YOUR VISUALIZATION TITLE HERE</title>
+<meta charset="utf-8">
+<html>
+  <head>
+    <h2 style="font-family:Courier;color:#081d58;font-size:40px">Assignment 1 Description: Visualization Design</h2>
+    <h4 style="font-family:Courier;color:#081d58">Anthony Wang</h4>
+    <style>
+      rect.bordered {
+        stroke: #E6E6E6;
+        stroke-width:2px;   
+      }
 
-    <!--bootstrap for styling-->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-</head>
-<body>    
-    <div class="container"> <!-- content -->
-        <h1>YOUR VISUALIZATION TITLE HERE</h1>
-        <p class="lead">By YOUR NAMES HERE</p>
+      text.mono {
+        font-size: 9pt;
+        font-family: Consolas, courier;
+        fill: #aaa;
+      }
 
-        <!-- more html content can go here; e.g., any data explanation -->
+      text.axis-workweek {
+        fill: #000;
+      }
 
-        <div id="visContainer"> <!-- A container to hold the visualization -->
-        </div>
-
-        <!-- more html content can go here, e.g., further details -->
-
-        <p id="citation">Data from ...</p>
+      text.axis-worktime {
+        fill: #000;
+      }
+    </style>
+    <script src="http://d3js.org/d3.v3.js"></script>
+  </head>
+  <body>
+    <div id="chart"></div>
+    <div id="dataset-picker">
     </div>
+    <script type="text/javascript">
+      var main_color="#081d58"
+      var header=d3.select('h2')
+       header.text("Assignment 1 Description: Visualization Design")
+        .attr("class","mono")
+      var subheader=d3.select('h4')
+       subheader.text("By Anthony Wang").attr("class","mono")
 
-    <!-- JavaScript modules -->
-    <script src="https://d3js.org/d3.v4.min.js"></script>
-    <script src="visualization.js"></script>
-</body>
+      var margin = { top: 50, right: 0, bottom: 100, left: 230 },
+          width = 840 - margin.left - margin.right,
+          height = 1000 - margin.top - margin.bottom,
+          
+          gridSize = Math.floor((width-100) / 10),
+          gridSizeWidth = Math.floor((width-100) / 10)*3,
+          legendElementWidth = gridSize*1.2,
+          positivecolor = "#ff0000"
+          buckets = 9,
+          colors = ["#00264d",	"#004080",	"#0059b3",	"#0073e6",	"#1a8cff",	"#4da6ff",	"#80bfff",	"#b3d9ff",	"#e6f2ff"], // alternatively colorbrewer.YlGnBu[9]
+          days = ["Aerobacter aerogenes",
+                    "Brucella abortus",
+                    "Escherichia coli",
+                    "Klebsiella pneumoniae",
+                    "Mycobacterium tuberculosis",
+                    "Proteus vulgaris",
+                    "Pseudomonas aeruginosa ",
+                    "Salmonella (Eberthella) typhosa ",
+                    "Salmonella schottmuelleri ",
+                    "Brucella anthracis",
+                    "Diplococcus pneumoniae",
+                    "Staphylococcus albus ",
+                    "Staphylococcus aureus ",
+                    "Streptococcus fecalis ",
+                    "Streptococcus hemolyticus ",
+                    "Streptococcus viridans"],
+          times = ["Penicilin",	"Streptomycin ","Neomycin",];
+          datasets = ["antibiotics_data.csv"];
+
+      var svg = d3.select("#chart").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      var dayLabels = svg.selectAll(".dayLabel")
+          .data(days)
+          .enter().append("text")
+            .text(function (d) { return d; })
+            .attr("x", 0)
+            .attr("y", function (d, i) { return i * gridSize; })
+            .style("text-anchor", "end")
+            .style("font-size","14px")
+            .style("fill",function(d,i){if(i<9){ return d3.rgb(main_color); }else{ return d3.rgb(positivecolor); };})
+            .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
+            .attr("class", function (d, i) { return ((i >= 0 && i <= 4) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis"); });
+
+      var timeLabels = svg.selectAll(".timeLabel")
+          .data(times)
+          .enter().append("text")
+            .text(function(d) { return d; })
+            .attr("x", function(d, i) { return i * gridSizeWidth+15; })
+            .attr("y", 0)
+            .style("text-anchor", "middle")
+            .style("font-size","14px")
+            .style("fill","black")
+            .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+            .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); });
+
+      var heatmapChart = function(tsvFile) {
+        d3.csv(tsvFile,
+        function(d) {
+          return {
+            day: +d.days,
+            hour: +d.times,
+            value: +d.value
+          };
+        },
+        function(error, data) {
+          var colorScale = d3.scale.quantile()
+              .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
+              .range(colors);
+
+          var cards = svg.selectAll(".hour")
+              .data(data, function(d) {return d.day+':'+d.hour;});
+
+          cards.append("title");
+
+
+          cards.enter().append("rect")
+              .attr("x", function(d) { return (d.hour - 1) * gridSizeWidth; })
+              .attr("y", function(d) { return (d.day - 1) * gridSize; })
+              .attr("rx", 4)
+              .attr("ry", 4)
+              .attr("class", "hour bordered")
+              .attr("width", gridSizeWidth)
+              .attr("height", gridSize)
+              .style('stroke', function(d){if(d.day<10){ ; }else{ return positivecolor; };})
+              .style("fill", colors[0]);
+
+
+          cards.transition().duration(1000)
+              .style("fill", function(d) { return colorScale(d.value); });
+
+          cards.select("title").text(function(d) { return d.value; });
+
+          cards.enter().append("text")
+              .text(function(d){return precisionRound(Math.pow(2.7,d.value-6.95469),3);})
+              .attr("x", function(d) { return (d.hour - 1) * gridSizeWidth+12; })
+              .attr("y", function(d) { return (d.day - 1) * gridSize+30; })
+              .attr("class", "mono")
+              .style("fill",function(d){if(Math.pow(2.7,d.value-6.95469)<1){return colors[8];}else{return colors[0];}})
+
+          cards.exit().remove();
+
+          var legend = svg.selectAll(".legend")
+              .data([0].concat(colorScale.quantiles()), function(d) { return d; });
+
+          legend.enter().append("g")
+              .attr("class", "legend");
+
+          legend.append("rect")
+            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("y", height)
+            .attr("width", legendElementWidth)
+            .attr("height", gridSize / 2)
+            .style("fill", function(d, i) { return colors[i]; });
+
+          legend.append("text")
+            .attr("class", "mono")
+            .text(function(d) { return "≥ " + precisionRound(Math.pow(2.7,d-6.95469),3); })
+            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("y", height + gridSize);
+
+        legend.append("text")
+            .attr("class", "mono")
+            .text("Most Effective")
+            .attr("x", 0)
+            .attr("y", height-10);
+        
+        legend.append("text")
+            .attr("class", "mono")
+            .text("Least Effective")
+            .attr("x", 460)
+            .attr("y", height-10);
+        
+        legend.append("text")
+            .attr("class", "mono")
+            .text("Gram Staining Positive:Orange")
+            .attr("x", -230)
+            .attr("y", -20)
+            .style("font-size","14px")
+            .style("fill", d3.rgb(positivecolor));
+        
+        legend.append("text")
+            .attr("class", "mono")
+            .text("Gram Staining Negative:Blue")
+            .attr("x", -230)
+            .attr("y", -40)
+            .style("font-size","14px")
+            .style("fill", d3.rgb(main_color));
+
+        legend.exit().remove();
+
+        
+        });  
+      };
+
+      heatmapChart(datasets[0]);
+      
+    function precisionRound(number, precision) {
+
+        var factor = Math.pow(10, precision);
+        return Math.round(number * factor) / factor;
+
+            }
+
+
+    </script>
+  </body>
 </html>
